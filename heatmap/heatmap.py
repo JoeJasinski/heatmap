@@ -75,7 +75,7 @@ class Heatmap:
         if not self._heatmap:
             raise Exception("Heatmap shared library not found in PYTHONPATH.")
 
-    def heatmap(self, points, dotsize=150, opacity=128, size=(1024, 1024), scheme="classic", area=None):
+    def heatmap(self, points, dotsize=150, opacity=128, size=(1024, 1024), scheme="classic", area=None, color_schemes=None):
         """
         points  -> an iterable list of tuples, where the contents are the
                    x,y coordinates to plot. e.g., [(1, 1), (2, 2), (3, 3)]
@@ -90,11 +90,19 @@ class Heatmap:
         area    -> Specify bounding coordinates of the output image. Tuple of
                    tuples: ((minX, minY), (maxX, maxY)).  If None or unspecified,
                    these values are calculated based on the input data.
+        color_schemes -> Define a custom colorscheme module to specify alternate
+                   color schemes.  This must take the same format as the existing
+                   colorscheme.py module.
         """
         self.dotsize = dotsize
         self.opacity = opacity
         self.size = size
         self.points = points
+
+        if not color_schemes:
+            self._colorschemes = color_schemes
+        else: 
+            self._colorschemes = colorschemes
 
         if area is not None:
             self.area = area
@@ -146,12 +154,12 @@ class Heatmap:
 
         #TODO is there a better way to do this??
         flat = []
-        for r, g, b in colorschemes.schemes[scheme]:
+        for r, g, b in self._colorschemes.schemes[scheme]:
             flat.append(r)
             flat.append(g)
             flat.append(b)
         arr_cs = (
-            ctypes.c_int * (len(colorschemes.schemes[scheme]) * 3))(*flat)
+            ctypes.c_int * (len(self._colorschemes.schemes[scheme]) * 3))(*flat)
         return arr_cs
 
     def _ranges(self, points):
@@ -195,4 +203,4 @@ class Heatmap:
         """
         Return a list of available color scheme names.
         """
-        return colorschemes.valid_schemes()
+        return self._colorschemes.valid_schemes()
